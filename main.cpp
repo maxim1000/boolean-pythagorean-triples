@@ -13,16 +13,17 @@ struct TTriplet
 };
 std::vector<TTriplet> FindTriplets(int max)
 {
+	std::vector<int> roots(2*max*max+1,-1);
+	for(int c=0;c*c<int(roots.size());++c)
+		roots[c*c]=c;
 	std::vector<TTriplet> triplets;
 	for(int a=1;a<=max;++a)
 	{
 		for(int b=a+1;b<=max;++b)
 		{
-			for(int c=b+1;c<=max;++c)
-			{
-				if(a*a+b*b==c*c)
-					triplets.push_back({a,b,c});
-			}
+			const int c=roots[a*a+b*b];
+			if(c!=-1 && c<=max)
+				triplets.push_back({a,b,c});
 		}
 	}
 	return triplets;
