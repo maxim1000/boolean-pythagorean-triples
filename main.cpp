@@ -54,6 +54,18 @@ bool IsCorrect(
 	}
 	return true;
 }
+bool IsCorrect(
+	const std::vector<TColor> &colors,
+	const std::vector<std::vector<TTriplet>> &tripletMap,
+	const std::vector<int> &elementSubset)
+{
+	for(int element:elementSubset)
+	{
+		if(!IsCorrect(colors,tripletMap[element]))
+			return false;
+	}
+	return true;
+}
 TColor GetOppositeColor(TColor color)
 {
 	switch(color)
@@ -117,8 +129,9 @@ bool IsPossible(
 	for(auto newColor:{TColor::Black,TColor::White})
 	{
 		colors[nextElement]=newColor;
-		const auto updatedElements=UpdateElements(colors,tripletMap,nextElement);
-		if(IsCorrect(colors,triplets))
+		auto updatedElements=UpdateElements(colors,tripletMap,nextElement);
+		updatedElements.push_back(nextElement);
+		if(IsCorrect(colors,tripletMap,updatedElements))
 		{
 			if(IsPossible(colors,triplets,tripletMap))
 				return true;
@@ -126,7 +139,6 @@ bool IsPossible(
 		for(int element:updatedElements)
 			colors[element]=TColor::Undefined;
 	}
-	colors[nextElement]=TColor::Undefined;
 	return false;
 }
 bool IsPossible(int max)
