@@ -1,1 +1,1 @@
-29: possible, 27.835s
+29: possible, 4.317s
