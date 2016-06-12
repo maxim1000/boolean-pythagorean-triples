@@ -74,37 +74,46 @@ bool IsPossible(
 	*undefined=TColor::Undefined;
 	return false;
 }
+bool IsPossible(int max)
+{
+	std::vector<TColor> colors(max+1,TColor::Undefined);
+	const auto triplets=FindTriplets(max);
+	std::vector<std::vector<TTriplet>> tripletMap(max+1);
+	for(const auto &triplet:triplets)
+	{
+		for(int element:triplet.Elements)
+			tripletMap[element].push_back(triplet);
+	}
+	if(IsPossible(colors,triplets,tripletMap))
+	{
+		const bool hasUndefined=
+			std::find(colors.begin(),colors.end(),TColor::Undefined)!=colors.end();
+		if(hasUndefined||!IsCorrect(colors,triplets))
+			throw std::logic_error("found an incorrect coloring");
+		return true;
+	}
+	else
+		return false;
+}
 int main()
 {
-	for(int max=205;max<8000;++max)
+	try
 	{
-		const auto start=std::chrono::steady_clock::now();
-		std::cout<<max<<": ";
-		std::vector<TColor> colors(max+1,TColor::Undefined);
-		const auto triplets=FindTriplets(max);
-		std::vector<std::vector<TTriplet>> tripletMap(max+1);
-		for(const auto &triplet:triplets)
+		for(int max=205;max<8000;++max)
 		{
-			for(int element:triplet.Elements)
-				tripletMap[element].push_back(triplet);
+			const auto start=std::chrono::steady_clock::now();
+			std::cout<<max<<": ";
+			std::cout<<IsPossible(max)?"possible":"impossible";
+			const auto finish=std::chrono::steady_clock::now();
+			const auto ms=
+				std::chrono::duration_cast<std::chrono::milliseconds>(finish-start).count();
+			std::cout<<", "<<ms/1000.<<"s"<<std::endl;
 		}
-		if(IsPossible(colors,triplets,tripletMap))
-		{
-			const bool hasUndefined=
-				std::find(colors.begin(),colors.end(),TColor::Undefined)!=colors.end();
-			if(hasUndefined||!IsCorrect(colors,triplets))
-			{
-				std::cerr<<"error!!!"<<std::endl;
-				return 1;
-			}
-			std::cout<<"possible";
-		}
-		else
-			std::cout<<"impossible";
-		const auto finish=std::chrono::steady_clock::now();
-		const auto ms=
-			std::chrono::duration_cast<std::chrono::milliseconds>(finish-start).count();
-		std::cout<<", "<<ms/1000.<<"s"<<std::endl;
+	}
+	catch(const std::exception &e)
+	{
+		std::cerr<<e.what()<<std::endl;
+		return 1;
 	}
 	return 0;
 }
