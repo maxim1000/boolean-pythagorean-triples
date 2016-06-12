@@ -53,11 +53,58 @@ bool IsCorrect(
 	}
 	return true;
 }
+TColor GetOppositeColor(TColor color)
+{
+	switch(color)
+	{
+		case TColor::Black:
+			return TColor::White;
+		case TColor::White:
+			return TColor::Black;
+		case TColor::Undefined:
+			return TColor::Undefined;
+		default:
+			throw std::logic_error("unexpected value of TColor");
+	}
+}
+std::vector<int> UpdateElements(
+	std::vector<TColor> &colors,
+	const std::vector<TTriplet> &triplets)
+{
+	std::vector<int> updatedElements;
+	while(true)
+	{
+		bool changedAnything=false;
+		for(const auto &triplet:triplets)
+		{
+			for(int shift=0;shift<3;++shift)
+			{
+				int shifted[3];
+				for(int c=0;c<3;++c)
+					shifted[c]=triplet.Elements[(shift+c)%3];
+				if(colors[shifted[0]]!=colors[shifted[1]])
+					continue;
+				if(colors[shifted[0]]==TColor::Undefined)
+					continue;
+				if(colors[shifted[2]]==TColor::Undefined)
+				{
+					colors[shifted[2]]=GetOppositeColor(colors[shifted[0]]);
+					updatedElements.push_back(shifted[2]);
+					changedAnything=true;
+				}
+			}
+		}
+		if(!changedAnything)
+			break;
+	}
+	return updatedElements;
+}
 bool IsPossible(
 	std::vector<TColor> &colors,
 	const std::vector<TTriplet> &triplets,
 	const std::vector<std::vector<TTriplet>> &tripletMap)
 {
+	const auto updatedElements=UpdateElements(colors,triplets);
 	const auto undefined=std::find(colors.begin(),colors.end(),TColor::Undefined);
 	if(undefined==colors.end())
 		return true;
@@ -65,13 +112,15 @@ bool IsPossible(
 	for(auto newColor:{TColor::Black,TColor::White})
 	{
 		*undefined=newColor;
-		if(IsCorrect(colors,tripletMap[element]))
+		if(IsCorrect(colors,triplets))
 		{
 			if(IsPossible(colors,triplets,tripletMap))
 				return true;
 		}
 	}
 	*undefined=TColor::Undefined;
+	for(int element:updatedElements)
+		colors[element]=TColor::Undefined;
 	return false;
 }
 bool IsPossible(int max)
@@ -103,7 +152,7 @@ int main()
 		{
 			const auto start=std::chrono::steady_clock::now();
 			std::cout<<max<<": ";
-			std::cout<<IsPossible(max)?"possible":"impossible";
+			std::cout<<(IsPossible(max)?"possible":"impossible");
 			const auto finish=std::chrono::steady_clock::now();
 			const auto ms=
 				std::chrono::duration_cast<std::chrono::milliseconds>(finish-start).count();
