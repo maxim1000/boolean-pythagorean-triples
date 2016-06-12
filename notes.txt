@@ -1,1 +1,1 @@
-3029: possible, 15.733s
+3114: possible, 27.208s
