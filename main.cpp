@@ -69,13 +69,14 @@ TColor GetOppositeColor(TColor color)
 }
 std::vector<int> UpdateElements(
 	std::vector<TColor> &colors,
-	const std::vector<TTriplet> &triplets)
+	const std::vector<std::vector<TTriplet>> &tripletMap,
+	int notUpdatedElement)
 {
 	std::vector<int> updatedElements;
-	while(true)
+	updatedElements.push_back(notUpdatedElement);
+	for(int index=0;index<int(updatedElements.size());++index)
 	{
-		bool changedAnything=false;
-		for(const auto &triplet:triplets)
+		for(const auto &triplet:tripletMap[updatedElements[index]])
 		{
 			for(int shift=0;shift<3;++shift)
 			{
@@ -90,13 +91,11 @@ std::vector<int> UpdateElements(
 				{
 					colors[shifted[2]]=GetOppositeColor(colors[shifted[0]]);
 					updatedElements.push_back(shifted[2]);
-					changedAnything=true;
 				}
 			}
 		}
-		if(!changedAnything)
-			break;
 	}
+	updatedElements.erase(updatedElements.begin());
 	return updatedElements;
 }
 bool IsPossible(
@@ -104,7 +103,6 @@ bool IsPossible(
 	const std::vector<TTriplet> &triplets,
 	const std::vector<std::vector<TTriplet>> &tripletMap)
 {
-	const auto updatedElements=UpdateElements(colors,triplets);
 	int nextElement=-1;
 	for(int element=0;element<int(tripletMap.size());++element)
 	{
@@ -118,15 +116,16 @@ bool IsPossible(
 	for(auto newColor:{TColor::Black,TColor::White})
 	{
 		colors[nextElement]=newColor;
+		const auto updatedElements=UpdateElements(colors,tripletMap,nextElement);
 		if(IsCorrect(colors,triplets))
 		{
 			if(IsPossible(colors,triplets,tripletMap))
 				return true;
 		}
+		for(int element:updatedElements)
+			colors[element]=TColor::Undefined;
 	}
 	colors[nextElement]=TColor::Undefined;
-	for(int element:updatedElements)
-		colors[element]=TColor::Undefined;
 	return false;
 }
 bool IsPossible(int max)
@@ -154,7 +153,7 @@ int main()
 {
 	try
 	{
-		for(int max=3029;max<8000;++max)
+		for(int max=1;max<8000;++max)
 		{
 			const auto start=std::chrono::steady_clock::now();
 			std::cout<<max<<": ";
