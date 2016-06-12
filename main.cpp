@@ -166,7 +166,7 @@ int main()
 {
 	try
 	{
-		for(int max=3140;max<8000;++max)
+		for(int max=3750;max<8000;++max)
 		{
 			const auto start=std::chrono::steady_clock::now();
 			std::cout<<max<<": ";
