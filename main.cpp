@@ -71,7 +71,7 @@ bool IsPossible(
 }
 int main()
 {
-	for(int max=32;max<8000;++max)
+	for(int max=205;max<8000;++max)
 	{
 		const auto start=std::chrono::steady_clock::now();
 		std::cout<<max<<": ";
