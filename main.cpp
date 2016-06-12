@@ -35,15 +35,21 @@ bool IsCorrect(
 	{
 		bool hasWhite=false;
 		bool hasBlack=false;
+		bool hasUndefined=false;
 		for(auto element:triplet.Elements)
 		{
 			if(colors[element]==TColor::Black)
 				hasBlack=true;
 			if(colors[element]==TColor::White)
 				hasWhite=true;
+			if(colors[element]==TColor::Undefined)
+				hasUndefined=true;
 		}
-		if(!hasBlack || !hasWhite)
-			return false;
+		if(!hasUndefined)
+		{
+			if(!hasBlack||!hasWhite)
+				return false;
+		}
 	}
 	return true;
 }
@@ -53,11 +59,11 @@ bool IsPossible(
 {
 	const auto undefined=std::find(colors.begin(),colors.end(),TColor::Undefined);
 	if(undefined==colors.end())
-		return IsCorrect(colors,triplets);
+		return true;
 	for(auto newColor:{TColor::Black,TColor::White})
 	{
 		*undefined=newColor;
-		if(IsPossible(colors,triplets))
+		if(IsCorrect(colors,triplets) && IsPossible(colors,triplets))
 			return true;
 	}
 	*undefined=TColor::Undefined;
@@ -65,13 +71,25 @@ bool IsPossible(
 }
 int main()
 {
-	for(int max=29;max<8000;++max)
+	for(int max=32;max<8000;++max)
 	{
 		const auto start=std::chrono::steady_clock::now();
 		std::cout<<max<<": ";
 		std::vector<TColor> colors(max+1,TColor::Undefined);
 		const auto triplets=FindTriplets(max);
-		std::cout<<(IsPossible(colors,triplets)?"possible":"impossible");
+		if(IsPossible(colors,triplets))
+		{
+			const bool hasUndefined=
+				std::find(colors.begin(),colors.end(),TColor::Undefined)!=colors.end();
+			if(hasUndefined||!IsCorrect(colors,triplets))
+			{
+				std::cerr<<"error!!!"<<std::endl;
+				return 1;
+			}
+			std::cout<<"possible";
+		}
+		else
+			std::cout<<"impossible";
 		const auto finish=std::chrono::steady_clock::now();
 		const auto ms=
 			std::chrono::duration_cast<std::chrono::milliseconds>(finish-start).count();
