@@ -1,1 +1,1 @@
-3750: possible, 71.229s
+3750: possible, 17.734s

@@ -111,12 +111,43 @@ std::vector<int> UpdateElements(
 	updatedElements.erase(updatedElements.begin());
 	return updatedElements;
 }
-bool IsPossible(
+bool IsColoringPossible(
 	std::vector<TColor> &colors,
-	const std::vector<TTriplet> &triplets,
+	const std::vector<std::vector<TTriplet>> &tripletMap,
+	int element,
+	TColor newColor)
+{
+	colors[element]=newColor;
+	auto updatedElements=UpdateElements(colors,tripletMap,element);
+	updatedElements.push_back(element);
+	const bool correct=IsCorrect(colors,tripletMap,updatedElements);
+	for(int e:updatedElements)
+		colors[e]=TColor::Undefined;
+	return correct;
+}
+int SelectElementWithQuickCutoff(
+	std::vector<TColor> &colors,
 	const std::vector<std::vector<TTriplet>> &tripletMap)
 {
-	int nextElement=-1;
+	for(int element=0;element<int(tripletMap.size());++element)
+	{
+		if(colors[element]!=TColor::Undefined)
+			continue;
+		for(auto newColor:{TColor::Black,TColor::White})
+		{
+			if(!IsColoringPossible(colors,tripletMap,element,newColor))
+				return element;
+		}
+	}
+	return -1;
+}
+int SelectNextElementToGuess(
+	std::vector<TColor> &colors,
+	const std::vector<std::vector<TTriplet>> &tripletMap)
+{
+	int nextElement=SelectElementWithQuickCutoff(colors,tripletMap);
+	if(nextElement!=-1)
+		return nextElement;
 	for(int element=0;element<int(tripletMap.size());++element)
 	{
 		if(colors[element]!=TColor::Undefined)
@@ -124,6 +155,14 @@ bool IsPossible(
 		if(nextElement==-1 || tripletMap[element].size()>tripletMap[nextElement].size())
 			nextElement=element;
 	}
+	return nextElement;
+}
+bool IsPossible(
+	std::vector<TColor> &colors,
+	const std::vector<TTriplet> &triplets,
+	const std::vector<std::vector<TTriplet>> &tripletMap)
+{
+	const int nextElement=SelectNextElementToGuess(colors,tripletMap);
 	if(nextElement==-1)
 		return true;
 	for(auto newColor:{TColor::Black,TColor::White})
