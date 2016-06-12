@@ -1,1 +1,1 @@
-3114: possible, 17.96s
+3140: possible, 25.224s
