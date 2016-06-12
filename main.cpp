@@ -105,20 +105,26 @@ bool IsPossible(
 	const std::vector<std::vector<TTriplet>> &tripletMap)
 {
 	const auto updatedElements=UpdateElements(colors,triplets);
-	const auto undefined=std::find(colors.begin(),colors.end(),TColor::Undefined);
-	if(undefined==colors.end())
+	int nextElement=-1;
+	for(int element=0;element<int(tripletMap.size());++element)
+	{
+		if(colors[element]!=TColor::Undefined)
+			continue;
+		if(nextElement==-1 || tripletMap[element].size()>tripletMap[nextElement].size())
+			nextElement=element;
+	}
+	if(nextElement==-1)
 		return true;
-	const int element=int(undefined-colors.begin());
 	for(auto newColor:{TColor::Black,TColor::White})
 	{
-		*undefined=newColor;
+		colors[nextElement]=newColor;
 		if(IsCorrect(colors,triplets))
 		{
 			if(IsPossible(colors,triplets,tripletMap))
 				return true;
 		}
 	}
-	*undefined=TColor::Undefined;
+	colors[nextElement]=TColor::Undefined;
 	for(int element:updatedElements)
 		colors[element]=TColor::Undefined;
 	return false;
@@ -148,7 +154,7 @@ int main()
 {
 	try
 	{
-		for(int max=205;max<8000;++max)
+		for(int max=1625;max<8000;++max)
 		{
 			const auto start=std::chrono::steady_clock::now();
 			std::cout<<max<<": ";
