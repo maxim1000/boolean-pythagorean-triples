@@ -55,16 +55,21 @@ bool IsCorrect(
 }
 bool IsPossible(
 	std::vector<TColor> &colors,
-	const std::vector<TTriplet> &triplets)
+	const std::vector<TTriplet> &triplets,
+	const std::vector<std::vector<TTriplet>> &tripletMap)
 {
 	const auto undefined=std::find(colors.begin(),colors.end(),TColor::Undefined);
 	if(undefined==colors.end())
 		return true;
+	const int element=int(undefined-colors.begin());
 	for(auto newColor:{TColor::Black,TColor::White})
 	{
 		*undefined=newColor;
-		if(IsCorrect(colors,triplets) && IsPossible(colors,triplets))
-			return true;
+		if(IsCorrect(colors,tripletMap[element]))
+		{
+			if(IsPossible(colors,triplets,tripletMap))
+				return true;
+		}
 	}
 	*undefined=TColor::Undefined;
 	return false;
@@ -77,7 +82,13 @@ int main()
 		std::cout<<max<<": ";
 		std::vector<TColor> colors(max+1,TColor::Undefined);
 		const auto triplets=FindTriplets(max);
-		if(IsPossible(colors,triplets))
+		std::vector<std::vector<TTriplet>> tripletMap(max+1);
+		for(const auto &triplet:triplets)
+		{
+			for(int element:triplet.Elements)
+				tripletMap[element].push_back(triplet);
+		}
+		if(IsPossible(colors,triplets,tripletMap))
 		{
 			const bool hasUndefined=
 				std::find(colors.begin(),colors.end(),TColor::Undefined)!=colors.end();
