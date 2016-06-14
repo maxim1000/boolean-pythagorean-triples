@@ -1,6 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 enum class TColor
 {
 	Black,
@@ -180,32 +181,76 @@ bool IsPossible(
 	}
 	return false;
 }
+//When an element has only one triplet, we will always be able to select
+//a value for it. So these elements limit nothing and can be removed to
+//reduce computation.
+void RemoveRedundantTriplets(
+	std::vector<TTriplet> &triplets,
+	int max)
+{
+	while(true)
+	{
+		std::vector<int> popularity(max+1,0);
+		for(const auto &triplet:triplets)
+			for(int element:triplet.Elements)
+				++popularity[element];
+		int elementWithSingleTriplet=-1;
+		for(int element=0;element<=max;++element)
+			if(popularity[element]==1)
+				elementWithSingleTriplet=element;
+		if(elementWithSingleTriplet==-1)
+			break;
+		const auto predicate=[&](const TTriplet &triplet)
+		{
+			const auto count=std::count(
+				std::begin(triplet.Elements),
+				std::end(triplet.Elements),
+				elementWithSingleTriplet);
+			return count!=0;
+		};
+		triplets.erase(
+			std::remove_if(triplets.begin(),triplets.end(),predicate),
+			triplets.end());
+	}
+}
 bool IsPossible(int max)
 {
 	std::vector<TColor> colors(max+1,TColor::Undefined);
-	const auto triplets=FindTriplets(max);
-	std::vector<std::vector<TTriplet>> tripletMap(max+1);
-	for(const auto &triplet:triplets)
+	for(bool reduce:{true,false})
 	{
-		for(int element:triplet.Elements)
-			tripletMap[element].push_back(triplet);
+		//the second pass is only to ensure that colors are set according
+		//to all triplets, even the redundant ones
+		auto triplets=FindTriplets(max);
+		if(reduce)
+			RemoveRedundantTriplets(triplets,max);
+		std::vector<std::vector<TTriplet>> tripletMap(max+1);
+		for(const auto &triplet:triplets)
+		{
+			for(int element:triplet.Elements)
+				tripletMap[element].push_back(triplet);
+		}
+		if(!IsPossible(colors,triplets,tripletMap))
+			return false;
+		if(reduce)
+		{
+			for(int element=0;element<=max;++element)
+			{
+				if(tripletMap[element].empty())
+					colors[element]=TColor::Undefined;
+			}
+		}
 	}
-	if(IsPossible(colors,triplets,tripletMap))
-	{
-		const bool hasUndefined=
-			std::find(colors.begin(),colors.end(),TColor::Undefined)!=colors.end();
-		if(hasUndefined||!IsCorrect(colors,triplets))
-			throw std::logic_error("found an incorrect coloring");
-		return true;
-	}
-	else
-		return false;
+	const bool hasUndefined=
+		std::find(colors.begin(),colors.end(),TColor::Undefined)!=colors.end();
+	if(hasUndefined||!IsCorrect(colors,FindTriplets(max)))
+		throw std::logic_error("found an incorrect coloring");
+	return true;
 }
 int main()
 {
 	try
 	{
-		for(int max=4350;max<8000;++max)
+		for(int max=4100;max<8000;++max)
 		{
 			const auto start=std::chrono::steady_clock::now();
 			std::cout<<max<<": ";
