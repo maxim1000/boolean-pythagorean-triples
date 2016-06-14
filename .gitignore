@@ -3,3 +3,4 @@ Release
 *.opensdf
 *.sdf
 x64
+.vs
