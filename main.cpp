@@ -185,12 +185,14 @@ bool IsPossible(
 	return false;
 }
 //When an element has only one triplet, we will always be able to select
-//a value for it. So these elements limit nothing and can be removed to
-//reduce computation.
-void RemoveRedundantTriplets(
+//a value for it. So these elements limit nothing and their triplets can
+//be processed later. If after extracting some triplet another one becomes
+//redundant it will be extracted too.
+std::vector<TTriplet> ExtractRedundantTriplets(
 	std::vector<TTriplet> &triplets,
 	int max)
 {
+	std::vector<TTriplet> redundant;
 	while(true)
 	{
 		std::vector<int> popularity(max+1,0);
@@ -209,12 +211,14 @@ void RemoveRedundantTriplets(
 				std::begin(triplet.Elements),
 				std::end(triplet.Elements),
 				elementWithSingleTriplet);
-			return count!=0;
+			return count==0;
 		};
-		triplets.erase(
-			std::remove_if(triplets.begin(),triplets.end(),predicate),
-			triplets.end());
+		const auto redundantStart=
+			std::partition(triplets.begin(),triplets.end(),predicate);
+		redundant.insert(redundant.end(),redundantStart,triplets.end());
+		triplets.erase(redundantStart,triplets.end());
 	}
+	return redundant;
 }
 //After we process all elements with triplets, the rest can be colored in any
 //way.
@@ -237,16 +241,12 @@ TTripletMap BuildTripletMap(const std::vector<TTriplet> &triplets,int max)
 bool IsPossible(int max)
 {
 	std::vector<TColor> colors(max+1,TColor::Undefined);
-	for(bool reduce:{true,false})
-	{
-		//the second pass is only to ensure that colors are set according
-		//to all triplets, even the redundant ones
-		auto triplets=FindTriplets(max);
-		if(reduce)
-			RemoveRedundantTriplets(triplets,max);
-		if(!IsPossible(colors,triplets,BuildTripletMap(triplets,max)))
-			return false;
-	}
+	auto triplets=FindTriplets(max);
+	const auto redundant=ExtractRedundantTriplets(triplets,max);
+	if(!IsPossible(colors,triplets,BuildTripletMap(triplets,max)))
+		return false;
+	if(!IsPossible(colors,redundant,BuildTripletMap(redundant,max)))
+		throw std::logic_error("could not color elements of redundant triplets");
 	ColorUndefinedSomehow(colors);
 	if(!IsCorrect(colors,FindTriplets(max)))
 		throw std::logic_error("found an incorrect coloring");
