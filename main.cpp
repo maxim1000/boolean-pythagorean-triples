@@ -12,6 +12,7 @@ struct TTriplet
 {
 	int Elements[3];
 };
+using TTripletMap=std::vector<std::vector<TTriplet>>;//for quick getting all triplets for an element
 std::vector<TTriplet> FindTriplets(int max)
 {
 	std::vector<int> roots(2*max*max+1,-1);
@@ -57,7 +58,7 @@ bool IsCorrect(
 }
 bool IsCorrect(
 	const std::vector<TColor> &colors,
-	const std::vector<std::vector<TTriplet>> &tripletMap,
+	const TTripletMap &tripletMap,
 	const std::vector<int> &elementSubset)
 {
 	for(int element:elementSubset)
@@ -83,7 +84,7 @@ TColor GetOppositeColor(TColor color)
 }
 std::vector<int> UpdateElements(
 	std::vector<TColor> &colors,
-	const std::vector<std::vector<TTriplet>> &tripletMap,
+	const TTripletMap &tripletMap,
 	int notUpdatedElement)
 {
 	std::vector<int> updatedElements;
@@ -114,7 +115,7 @@ std::vector<int> UpdateElements(
 }
 bool IsColoringPossible(
 	std::vector<TColor> &colors,
-	const std::vector<std::vector<TTriplet>> &tripletMap,
+	const TTripletMap &tripletMap,
 	int element,
 	TColor newColor)
 {
@@ -128,7 +129,7 @@ bool IsColoringPossible(
 }
 int SelectElementWithQuickCutoff(
 	std::vector<TColor> &colors,
-	const std::vector<std::vector<TTriplet>> &tripletMap)
+	const TTripletMap &tripletMap)
 {
 	for(int element=0;element<int(tripletMap.size());++element)
 	{
@@ -144,7 +145,7 @@ int SelectElementWithQuickCutoff(
 }
 int SelectNextElementToGuess(
 	std::vector<TColor> &colors,
-	const std::vector<std::vector<TTriplet>> &tripletMap)
+	const TTripletMap &tripletMap)
 {
 	int nextElement=SelectElementWithQuickCutoff(colors,tripletMap);
 	if(nextElement!=-1)
@@ -163,7 +164,7 @@ int SelectNextElementToGuess(
 bool IsPossible(
 	std::vector<TColor> &colors,
 	const std::vector<TTriplet> &triplets,
-	const std::vector<std::vector<TTriplet>> &tripletMap)
+	const TTripletMap &tripletMap)
 {
 	const int nextElement=SelectNextElementToGuess(colors,tripletMap);
 	if(nextElement==-1)
@@ -223,6 +224,16 @@ void ColorUndefinedSomehow(std::vector<TColor> &colors)
 		if(color==TColor::Undefined)
 			color=TColor::Black;
 }
+TTripletMap BuildTripletMap(const std::vector<TTriplet> &triplets,int max)
+{
+	TTripletMap tripletMap(max+1);
+	for(const auto &triplet:triplets)
+	{
+		for(int element:triplet.Elements)
+			tripletMap[element].push_back(triplet);
+	}
+	return tripletMap;
+}
 bool IsPossible(int max)
 {
 	std::vector<TColor> colors(max+1,TColor::Undefined);
@@ -233,22 +244,8 @@ bool IsPossible(int max)
 		auto triplets=FindTriplets(max);
 		if(reduce)
 			RemoveRedundantTriplets(triplets,max);
-		std::vector<std::vector<TTriplet>> tripletMap(max+1);
-		for(const auto &triplet:triplets)
-		{
-			for(int element:triplet.Elements)
-				tripletMap[element].push_back(triplet);
-		}
-		if(!IsPossible(colors,triplets,tripletMap))
+		if(!IsPossible(colors,triplets,BuildTripletMap(triplets,max)))
 			return false;
-		if(reduce)
-		{
-			for(int element=0;element<=max;++element)
-			{
-				if(tripletMap[element].empty())
-					colors[element]=TColor::Undefined;
-			}
-		}
 	}
 	ColorUndefinedSomehow(colors);
 	if(!IsCorrect(colors,FindTriplets(max)))
