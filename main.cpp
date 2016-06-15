@@ -153,6 +153,8 @@ int SelectNextElementToGuess(
 	{
 		if(colors[element]!=TColor::Undefined)
 			continue;
+		if(tripletMap[element].empty())
+			continue;
 		if(nextElement==-1 || tripletMap[element].size()>tripletMap[nextElement].size())
 			nextElement=element;
 	}
@@ -213,6 +215,14 @@ void RemoveRedundantTriplets(
 			triplets.end());
 	}
 }
+//After we process all elements with triplets, the rest can be colored in any
+//way.
+void ColorUndefinedSomehow(std::vector<TColor> &colors)
+{
+	for(auto &color:colors)
+		if(color==TColor::Undefined)
+			color=TColor::Black;
+}
 bool IsPossible(int max)
 {
 	std::vector<TColor> colors(max+1,TColor::Undefined);
@@ -240,9 +250,8 @@ bool IsPossible(int max)
 			}
 		}
 	}
-	const bool hasUndefined=
-		std::find(colors.begin(),colors.end(),TColor::Undefined)!=colors.end();
-	if(hasUndefined||!IsCorrect(colors,FindTriplets(max)))
+	ColorUndefinedSomehow(colors);
+	if(!IsCorrect(colors,FindTriplets(max)))
 		throw std::logic_error("found an incorrect coloring");
 	return true;
 }
