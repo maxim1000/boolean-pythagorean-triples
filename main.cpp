@@ -123,11 +123,37 @@ bool IsColoringPossible(
 		colors[e]=TColor::Undefined;
 	return correct;
 }
+std::vector<int> SortElementsByNumberOfDefinedNeighbours(
+	const std::vector<TColor> &colors,
+	const TTripletMap &tripletMap)
+{
+	using TElement=int;
+	using TDefinedNeighbour=int;
+	std::vector<std::pair<TDefinedNeighbour,TElement>> statistics;
+	for(int index=0;index<int(tripletMap.size());++index)
+	{
+		statistics.emplace_back(0,index);
+		for(const auto &triplet:tripletMap[index])
+		{
+			if(colors[triplet.Elements[1]]!=TColor::Undefined)
+				++statistics.back().first;
+			if(colors[triplet.Elements[2]]!=TColor::Undefined)
+				++statistics.back().first;
+		}
+	}
+	std::sort(statistics.begin(),statistics.end());
+	std::vector<int> elements;
+	for(auto element=statistics.rbegin();element!=statistics.rend();++element)
+		elements.push_back(element->second);
+	return elements;
+}
 int SelectElementWithQuickCutoff(
 	std::vector<TColor> &colors,
 	const TTripletMap &tripletMap)
 {
-	for(int element=0;element<int(tripletMap.size());++element)
+	const auto orderedElements=
+		SortElementsByNumberOfDefinedNeighbours(colors,tripletMap);
+	for(int element:orderedElements)
 	{
 		if(colors[element]!=TColor::Undefined)
 			continue;
