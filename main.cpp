@@ -93,20 +93,16 @@ std::vector<int> UpdateElements(
 	{
 		for(const auto &triplet:tripletMap[updatedElements[index]])
 		{
-			for(int shift=0;shift<3;++shift)
+			for(int undefined=1;undefined<3;++undefined)
 			{
-				int shifted[3];
-				for(int c=0;c<3;++c)
-					shifted[c]=triplet.Elements[(shift+c)%3];
-				if(colors[shifted[0]]!=colors[shifted[1]])
+				const int defined=1+2-undefined;
+				if(colors[triplet.Elements[0]]!=colors[triplet.Elements[defined]])
 					continue;
-				if(colors[shifted[0]]==TColor::Undefined)
+				if(colors[triplet.Elements[undefined]]!=TColor::Undefined)
 					continue;
-				if(colors[shifted[2]]==TColor::Undefined)
-				{
-					colors[shifted[2]]=GetOppositeColor(colors[shifted[0]]);
-					updatedElements.push_back(shifted[2]);
-				}
+				colors[triplet.Elements[undefined]]=
+					GetOppositeColor(colors[triplet.Elements[defined]]);
+				updatedElements.push_back(triplet.Elements[undefined]);
 			}
 		}
 	}
@@ -234,7 +230,15 @@ TTripletMap BuildTripletMap(const std::vector<TTriplet> &triplets,int max)
 	for(const auto &triplet:triplets)
 	{
 		for(int element:triplet.Elements)
-			tripletMap[element].push_back(triplet);
+		{
+			auto ordered=triplet;
+			while(ordered.Elements[0]!=element)
+			{
+				std::swap(ordered.Elements[0],ordered.Elements[1]);
+				std::swap(ordered.Elements[1],ordered.Elements[2]);
+			}
+			tripletMap[element].push_back(ordered);
+		}
 	}
 	return tripletMap;
 }
@@ -256,7 +260,7 @@ int main()
 {
 	try
 	{
-		for(int max=4380;max<8000;++max)
+		for(int max=4360;max<8000;++max)
 		{
 			const auto start=std::chrono::steady_clock::now();
 			std::cout<<max<<": ";
