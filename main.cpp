@@ -125,34 +125,36 @@ bool IsColoringPossible(
 }
 std::vector<int> SortElementsByNumberOfDefinedNeighbours(
 	const std::vector<TColor> &colors,
-	const TTripletMap &tripletMap)
+	const std::vector<TTriplet> &triplets)
 {
-	using TElement=int;
-	using TDefinedNeighbour=int;
-	std::vector<std::pair<TDefinedNeighbour,TElement>> statistics;
-	for(int index=0;index<int(tripletMap.size());++index)
+	std::vector<int> definedNeighboursCount(colors.size(),0);
+	for(const auto &triplet:triplets)
 	{
-		statistics.emplace_back(0,index);
-		for(const auto &triplet:tripletMap[index])
-		{
-			if(colors[triplet.Elements[1]]!=TColor::Undefined)
-				++statistics.back().first;
-			if(colors[triplet.Elements[2]]!=TColor::Undefined)
-				++statistics.back().first;
-		}
+		int numberOfDefined=0;
+		for(int element:triplet.Elements)
+			if(colors[element]!=TColor::Undefined)
+				++numberOfDefined;
+		for(int element:triplet.Elements)
+			if(colors[element]==TColor::Undefined)
+				definedNeighboursCount[element]+=numberOfDefined;
 	}
-	std::sort(statistics.begin(),statistics.end());
+	const auto predicate=[&](int earlier,int later)
+	{
+		return definedNeighboursCount[earlier]>definedNeighboursCount[later];
+	};
 	std::vector<int> elements;
-	for(auto element=statistics.rbegin();element!=statistics.rend();++element)
-		elements.push_back(element->second);
+	for(int index=0;index<int(colors.size());++index)
+		elements.push_back(index);
+	std::sort(elements.begin(),elements.end(),predicate);
 	return elements;
 }
 int SelectElementWithQuickCutoff(
 	std::vector<TColor> &colors,
+	const std::vector<TTriplet> &triplets,
 	const TTripletMap &tripletMap)
 {
 	const auto orderedElements=
-		SortElementsByNumberOfDefinedNeighbours(colors,tripletMap);
+		SortElementsByNumberOfDefinedNeighbours(colors,triplets);
 	for(int element:orderedElements)
 	{
 		if(colors[element]!=TColor::Undefined)
@@ -167,9 +169,10 @@ int SelectElementWithQuickCutoff(
 }
 int SelectNextElementToGuess(
 	std::vector<TColor> &colors,
+	const std::vector<TTriplet> &triplets,
 	const TTripletMap &tripletMap)
 {
-	int nextElement=SelectElementWithQuickCutoff(colors,tripletMap);
+	int nextElement=SelectElementWithQuickCutoff(colors,triplets,tripletMap);
 	if(nextElement!=-1)
 		return nextElement;
 	for(int element=0;element<int(tripletMap.size());++element)
@@ -188,7 +191,7 @@ bool IsPossible(
 	const std::vector<TTriplet> &triplets,
 	const TTripletMap &tripletMap)
 {
-	const int nextElement=SelectNextElementToGuess(colors,tripletMap);
+	const int nextElement=SelectNextElementToGuess(colors,triplets,tripletMap);
 	if(nextElement==-1)
 		return true;
 	for(auto newColor:{TColor::Black,TColor::White})
